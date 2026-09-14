@@ -140,6 +140,110 @@ function App() {
     }
   }, [weatherRisk, roadRisk, vehicleRiskStatus]);
 
+  useEffect(() => {
+  const routeARiskPenalty =
+    roadRisk === "High"
+      ? 40
+      : roadRisk === "Medium"
+      ? 20
+      : 5;
+
+  const routeAWeatherPenalty =
+    weatherRisk === "High"
+      ? 25
+      : weatherRisk === "Medium"
+      ? 12
+      : 3;
+
+  const routeAAccessibility = Math.max(
+    0,
+    accessibilityScore - routeARiskPenalty
+  );
+
+  const routeAReliability = Math.max(
+    0,
+    routeReliability -
+      Math.round(routeARiskPenalty / 2) -
+      Math.round(routeAWeatherPenalty / 2)
+  );
+
+  const routeAScore = Math.round(
+    routeAAccessibility * 0.45 +
+      routeAReliability * 0.35 +
+      65 * 0.20
+  );
+
+  const routeBAccessibility = Math.min(
+    100,
+    accessibilityScore + 25
+  );
+
+  const routeBReliability = Math.min(
+    100,
+    routeReliability + 25
+  );
+
+  const routeBScore = Math.round(
+    routeBAccessibility * 0.45 +
+      routeBReliability * 0.35 +
+      55 * 0.20
+  );
+
+  const routeCAccessibility = Math.min(
+    100,
+    accessibilityScore + 15
+  );
+
+  const routeCReliability = Math.min(
+    100,
+    routeReliability + 15
+  );
+
+  const routeCScore = Math.round(
+    routeCAccessibility * 0.45 +
+      routeCReliability * 0.35 +
+      50 * 0.20
+  );
+
+  const routeDAccessibility = Math.min(
+    100,
+    accessibilityScore + 10
+  );
+
+  const routeDReliability = Math.min(
+    100,
+    routeReliability + 10
+  );
+
+  const routeDScore = Math.round(
+    routeDAccessibility * 0.45 +
+      routeDReliability * 0.35 +
+      40 * 0.20
+  );
+
+  const routeScores = {
+    "Route A": routeAScore,
+    "Route B": routeBScore,
+    "Route C": routeCScore,
+    "Route D": routeDScore,
+  };
+
+  const bestRoute = Object.keys(routeScores).reduce(
+    (best, route) =>
+      routeScores[route] > routeScores[best]
+        ? route
+        : best,
+    "Route A"
+  );
+
+  setAiRecommendedRoute(bestRoute);
+}, [
+  roadRisk,
+  weatherRisk,
+  accessibilityScore,
+  routeReliability,
+]);
+
   // =========================
   // MAP ROAD STATUS HANDLER
   // =========================
@@ -190,72 +294,80 @@ function App() {
   // =========================
 
   const submitFieldReport = async () => {
-    if (!fieldReport.trim()) {
-      alert("Please enter a field report.");
-      return;
+  if (!fieldReport.trim()) {
+    alert("Please enter a field report.");
+    return;
+  }
+
+  const timestamp = new Date().toISOString();
+
+  try {
+    const response = await fetch(
+      "http://localhost:5678/webhook/field-report",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          incidentType,
+          severity: incidentSeverity,
+          description: fieldReport,
+          location: incidentLocationText,
+          timestamp,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    console.log("n8n response:", result);
+
+    if (!response.ok) {
+      throw new Error("Webhook request failed");
     }
 
-    const timestamp = new Date().toISOString();
+    // Store n8n result
+    setN8nResult(result);
 
-    try {
-      const response = await fetch(
-        "http://localhost:5678/webhook/field-report",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            incidentType,
-            severity: incidentSeverity,
-            description: fieldReport,
-            location: incidentLocationText,
-            timestamp,
-          }),
-        }
-      );
+    // Save submitted report
+    setSubmittedReport({
+      type: incidentType,
+      severity: incidentSeverity,
+      description: fieldReport,
+      location: incidentLocationText,
+      timestamp,
+    });
 
-      const result = await response.json();
+    // Update dashboard from n8n risk result
+    const workflowRisk = result.riskLevel;
 
-      console.log("n8n response:", result);
-
-      if (!response.ok) {
-        throw new Error("Webhook request failed");
-      }
-
-      setN8nResult(result);
-
-      setSubmittedReport({
-        type: incidentType,
-        severity: incidentSeverity,
-        description: fieldReport,
-        location: incidentLocationText,
-        timestamp,
-      });
-
+    if (workflowRisk === "High") {
+      setRoadRisk("High");
+      setVehicleRiskStatus("At Risk");
+      setRerouteRecommended(true);
       setActiveAlerts((prev) => prev + 1);
-
-      if (incidentSeverity === "High") {
-        setRoadRisk("High");
-        setVehicleRiskStatus("At Risk");
-        setRerouteRecommended(true);
-        setHighRiskRoads((prev) => prev + 1);
-      } else if (incidentSeverity === "Medium") {
-        setRoadRisk("Medium");
-        setVehicleRiskStatus("Caution");
-        setRerouteRecommended(true);
-      } else {
-        setRoadRisk("Low");
-        setVehicleRiskStatus("Safe");
-        setRerouteRecommended(false);
-      }
-
-      alert("✅ Field report sent to NER-LOGIX workflow!");
-    } catch (error) {
-      console.error("Field report error:", error);
-      alert("❌ Could not connect to n8n.");
+      setHighRiskRoads((prev) => prev + 1);
+    } else if (workflowRisk === "Medium") {
+      setRoadRisk("Medium");
+      setVehicleRiskStatus("Caution");
+      setRerouteRecommended(true);
+      setActiveAlerts((prev) => prev + 1);
+    } else {
+      setRoadRisk("Low");
+      setVehicleRiskStatus("Safe");
+      setRerouteRecommended(false);
     }
-  };
+
+    alert(
+      `✅ Report processed by NER-LOGIX workflow.\nRisk Level: ${workflowRisk}`
+    );
+
+  } catch (error) {
+    console.error("Field report error:", error);
+    alert("❌ Could not connect to n8n.");
+  }
+};
 
   // =========================
   // PAGE RENDERING
@@ -1334,17 +1446,14 @@ const routeAScore = Math.round(
     65 * 0.20
 );
 
-
-// ROUTE B
-
 const routeBAccessibility = Math.min(
   100,
-  accessibilityScore + 25
+  accessibilityScore + (roadRisk === "High" ? 25 : 5)
 );
 
 const routeBReliability = Math.min(
   100,
-  routeReliability + 25
+  routeReliability + (roadRisk === "High" ? 25 : 5)
 );
 
 const routeBScore = Math.round(
@@ -1352,9 +1461,6 @@ const routeBScore = Math.round(
     routeBReliability * 0.35 +
     55 * 0.20
 );
-
-
-// ROUTE C
 
 const routeCAccessibility = Math.min(
   100,
@@ -1372,9 +1478,6 @@ const routeCScore = Math.round(
     50 * 0.20
 );
 
-
-// ROUTE D
-
 const routeDAccessibility = Math.min(
   100,
   accessibilityScore + 10
@@ -1391,9 +1494,6 @@ const routeDScore = Math.round(
     40 * 0.20
 );
 
-
-// AI BEST ROUTE
-
 const routeScores = {
   "Route A": routeAScore,
   "Route B": routeBScore,
@@ -1401,13 +1501,15 @@ const routeScores = {
   "Route D": routeDScore,
 };
 
-const recommendedRoute = Object.keys(routeScores).reduce(
-  (bestRoute, route) =>
-    routeScores[route] > routeScores[bestRoute]
-      ? route
-      : bestRoute,
-  "Route A"
-);
+let recommendedRoute = "Route A";
+
+if (roadRisk === "High") {
+  recommendedRoute = "Route B";
+} else if (roadRisk === "Medium") {
+  recommendedRoute = "Route B";
+} else {
+  recommendedRoute = "Route A";
+}
 
   return (
     <>
@@ -2768,35 +2870,71 @@ const recommendedRoute = Object.keys(routeScores).reduce(
             {/* LATEST FIELD INCIDENT */}
 
             {submittedReport && (
-              <section className="field-report-panel">
-                <h2>📍 Latest Field Incident</h2>
+  <section className="field-report-panel">
+    <h2>📍 Latest Field Incident</h2>
 
-                <p>
-                  🚧 Incident:
-                  <b> {submittedReport.type}</b>
-                </p>
+    <p>
+      🚧 Incident:
+      <b> {submittedReport.type}</b>
+    </p>
 
-                <p>
-                  ⚠️ Severity:
-                  <b> {submittedReport.severity}</b>
-                </p>
+    <p>
+      ⚠️ Severity:
+      <b> {submittedReport.severity}</b>
+    </p>
 
-                <p>
-                  📍 Location:
-                  <b> {submittedReport.location}</b>
-                </p>
+    <p>
+      📍 Location:
+      <b> {submittedReport.location}</b>
+    </p>
 
-                <p>
-                  📝 Report:
-                  <b>
-                    {" "}
-                    {submittedReport.description ||
-                      "No description provided"}
-                  </b>
-                </p>
-              </section>
-            )}
+    <p>
+      📝 Report:
+      <b>
+        {" "}
+        {submittedReport.description ||
+          "No description provided"}
+      </b>
+    </p>
 
+    {n8nResult && (
+      <div
+        className={`alert-box ${
+          n8nResult.riskLevel === "High"
+            ? "risk-high"
+            : n8nResult.riskLevel === "Medium"
+            ? "risk-medium"
+            : "risk-low"
+        }`}
+>
+        <p>
+          🤖 <strong>Workflow Risk Analysis</strong>
+        </p>
+
+        <p>
+          Risk Score:{" "}
+          <strong>
+            {n8nResult.riskScore}/100
+          </strong>
+        </p>
+
+        <p>
+          Risk Level:{" "}
+          <strong>
+            {n8nResult.riskLevel}
+          </strong>
+        </p>
+
+        <p>
+          🚨 Alert:{" "}
+          <strong>
+            {n8nResult.alert}
+          </strong>
+        </p>
+      </div>
+    )}
+  </section>
+)}
             {/* ROUTE RECOMMENDATION */}
 
             {rerouteRecommended && (

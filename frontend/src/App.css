@@ -2216,3 +2216,33 @@ button {
     min-height: 400px;
   }
 }
+
+/* N8N WORKFLOW RESULT */
+
+.alert-box {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 12px;
+  background: #f5f7fa;
+  border-left: 5px solid #2563eb;
+}
+
+.alert-box p {
+  margin: 8px 0;
+}
+
+.alert-box strong {
+  font-weight: 700;
+}
+
+.risk-high {
+  border-left-color: #dc2626;
+}
+
+.risk-medium {
+  border-left-color: #f59e0b;
+}
+
+.risk-low {
+  border-left-color: #16a34a;
+}

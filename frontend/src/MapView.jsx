@@ -118,7 +118,6 @@ function MapView({
       ? routeB
       : routes[recommendedRoute || selectedRoute];
 
-  setSelectedRoute(recommendedRoute || selectedRoute);
   setVehiclePosition(currentRoute[0]);
 
   const timer = setInterval(() => {
