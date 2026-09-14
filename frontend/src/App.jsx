@@ -478,7 +478,7 @@ function App() {
             </p>
           </section>
 
-          <section className="cards">
+          <div className="dashboard-card">
             <div className="card">
               <h3>🛣️ Network Status</h3>
               <strong>Operational</strong>
@@ -502,7 +502,7 @@ function App() {
               <strong>{activeAlerts}</strong>
               <p>Active incidents</p>
             </div>
-          </section>
+          </div>
 
           <section className="command-map-panel">
             <div className="command-map-header">
@@ -638,7 +638,7 @@ function App() {
             </p>
           </section>
 
-          <section className="cards">
+          <section className="dashboard-cards">
             <div className="card">
               <h3>Total Vehicles</h3>
               <strong>3</strong>
@@ -826,7 +826,7 @@ function App() {
             </p>
           </section>
 
-          <section className="cards">
+          <section className="dashboard-cards">
             <div className="card">
               <h3>Active Alerts</h3>
               <strong>{activeAlerts}</strong>
@@ -1218,7 +1218,7 @@ function App() {
             </p>
           </section>
 
-          <section className="cards">
+          <section className="dashboard-cards">
             <div className="card">
               <h3>Emergency Deliveries</h3>
               <strong>1</strong>
@@ -1524,7 +1524,7 @@ if (roadRisk === "High") {
 
       {/* ROUTE OVERVIEW */}
 
-      <section className="cards">
+      <section className="dashboard-cards">
 
         <div className="card">
           <h3>Current Route</h3>
@@ -1935,7 +1935,7 @@ if (roadRisk === "High") {
 
       {/* WEATHER OVERVIEW */}
 
-      <section className="cards">
+      <section className="dashboard-cards">
 
         <div className="card">
           <h3>🌡️ Temperature</h3>
@@ -2192,7 +2192,7 @@ if (roadRisk === "High") {
             </p>
           </section>
 
-          <section className="cards">
+          <section className="dashboard-cards">
             <div className="card">
               <h3>Route Reliability</h3>
               <strong>{routeReliability}/100</strong>
@@ -2393,7 +2393,7 @@ if (roadRisk === "High") {
 
             {/* DASHBOARD CARDS */}
 
-            <section className="cards">
+            <section className="dashboard-cards">
               <div className="card">
                 <h3>🚚 Vehicles Tracked</h3>
                 <strong>1</strong>
@@ -2818,6 +2818,52 @@ if (roadRisk === "High") {
                 </div>
               )}
             </section>
+
+            <section className="alerts-panel">
+  <div className="alerts-header">
+    <div>
+      <span>LIVE MONITORING</span>
+      <h2>🚨 Active Alerts</h2>
+    </div>
+
+    <strong className={activeAlerts > 0 ? "alert-count danger" : "alert-count safe"}>
+      {activeAlerts} Active
+    </strong>
+  </div>
+
+  {activeAlerts > 0 ? (
+    <div className="alert-item danger-alert">
+      <div className="alert-icon">⚠️</div>
+
+      <div className="alert-content">
+        <h3>High-Risk Road Detected</h3>
+
+        <p>
+          Road disruption detected on the monitored corridor.
+          NER-LOGIX recommends an alternate route for essential logistics.
+        </p>
+
+        <div className="alert-details">
+          <span>📍 Guwahati → Shillong</span>
+          <span>🛣️ Risk: {roadRisk}</span>
+          <span>🤖 AI: {aiRecommendedRoute}</span>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div className="alert-item safe-alert">
+      <div className="alert-icon">✅</div>
+
+      <div className="alert-content">
+        <h3>No Active Disruptions</h3>
+
+        <p>
+          All monitored logistics corridors are currently operational.
+        </p>
+      </div>
+    </div>
+  )}
+</section>
 
             {/* FIELD REPORT */}
 

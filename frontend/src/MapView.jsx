@@ -21,8 +21,7 @@ function MapView({
 }) {
 
   const [roadBlocked, setRoadBlocked] = useState(false);
-  const [selectedRoute, setSelectedRoute] = useState("Route A");
-
+  const [selectedRoute, setSelectedRoute] = useState(recommendedRoute || "Route A");
 
   const start = [26.1445, 91.7362]; // Guwahati
   const end = [25.5788, 91.8933];   // Shillong
@@ -102,21 +101,32 @@ function MapView({
     "Route D": routeD,
   };
 
+  const activeRoute =
+  roadBlocked
+    ? "Route B"
+    : recommendedRoute || selectedRoute;
 
   // Vehicle position
   const [vehiclePosition, setVehiclePosition] =
     useState(routeA[0]);
 
+    useEffect(() => {
+      if (recommendedRoute) {
+        setSelectedRoute(recommendedRoute);
+      }
+    }, [recommendedRoute]);
 
   // Vehicle movement
   useEffect(() => {
 
   let index = 0;
 
-  const currentRoute =
-    roadBlocked
-      ? routeB
-      : routes[recommendedRoute || selectedRoute];
+  const activeRouteName =
+  roadBlocked
+    ? "Route B"
+    : recommendedRoute || selectedRoute;
+
+const currentRoute = routes[activeRouteName];
 
   setVehiclePosition(currentRoute[0]);
 
@@ -185,11 +195,11 @@ function MapView({
         positions={routeA}
         pathOptions={{
           color:
-            selectedRoute === "Route A"
+            activeRoute === "Route A"
               ? "blue"
               : "gray",
           weight:
-            selectedRoute === "Route A"
+            activeRoute === "Route A"
               ? 6
               : 3
         }}
@@ -207,15 +217,15 @@ function MapView({
         positions={routeB}
         pathOptions={{
           color:
-            selectedRoute === "Route B"
+            activeRoute === "Route B"
               ? "green"
               : "gray",
           weight:
-            selectedRoute === "Route B"
+            activeRoute === "Route B"
               ? 6
               : 3,
           dashArray:
-            selectedRoute === "Route B"
+            activeRoute === "Route B"
               ? undefined
               : "8 8"
         }}
@@ -233,15 +243,15 @@ function MapView({
         positions={routeC}
         pathOptions={{
           color:
-            selectedRoute === "Route C"
+            activeRoute === "Route C"
               ? "orange"
               : "gray",
           weight:
-            selectedRoute === "Route C"
+            activeRoute === "Route C"
               ? 6
               : 2,
           dashArray:
-            selectedRoute === "Route C"
+            activeRoute === "Route C"
               ? undefined
               : "6 8"
         }}
@@ -259,15 +269,15 @@ function MapView({
         positions={routeD}
         pathOptions={{
           color:
-            selectedRoute === "Route D"
+            activeRoute === "Route D"
               ? "purple"
               : "gray",
           weight:
-            selectedRoute === "Route D"
+            activeRoute === "Route D"
               ? 6
               : 2,
           dashArray:
-            selectedRoute === "Route D"
+            activeRoute === "Route D"
               ? undefined
               : "5 10"
         }}
@@ -378,6 +388,57 @@ function MapView({
 
       </button>
 
+      {/* ROUTE LEGEND */}
+
+<div
+  style={{
+    position: "absolute",
+    bottom: "20px",
+    left: "20px",
+    zIndex: 1000,
+    background: "white",
+    padding: "12px 15px",
+    borderRadius: "10px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+    fontSize: "13px",
+    lineHeight: "1.8"
+  }}
+>
+  <strong>🗺️ Route Legend</strong>
+
+  <div>🔵 Route A — Shortest</div>
+  <div>🟢 Route B — Reliable Alternate</div>
+  <div>🟠 Route C — Backup</div>
+  <div>🟣 Route D — Safe Corridor</div>
+  <div>🚚 Vehicle — MED-01</div>
+  <div>🔴 Risk Zone</div>
+</div>
+
+{/* ROUTE LEGEND */}
+
+<div
+  style={{
+    position: "absolute",
+    bottom: "20px",
+    left: "20px",
+    zIndex: 1000,
+    background: "white",
+    padding: "12px 15px",
+    borderRadius: "10px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+    fontSize: "13px",
+    lineHeight: "1.8"
+  }}
+>
+  <strong>🗺️ Route Legend</strong>
+
+  <div>🔵 Route A — Shortest</div>
+  <div>🟢 Route B — Reliable Alternate</div>
+  <div>🟠 Route C — Backup</div>
+  <div>🟣 Route D — Safe Corridor</div>
+  <div>🚚 Vehicle — MED-01</div>
+  <div>🔴 Risk Zone</div>
+</div>
 
       {/* RISK ZONE */}
 
